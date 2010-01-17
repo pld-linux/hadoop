@@ -6,7 +6,7 @@
 Summary:	Hadoop Distributed File System and MapReduce implementation
 Name:		hadoop
 Version:	0.20.1
-Release:	0.1
+Release:	0.2
 License:	Apache v2.0
 Group:		Daemons
 URL:		http://hadoop.apache.org/common/
@@ -64,9 +64,7 @@ s|.*JAVA_HOME=.*|export JAVA_HOME=%{_prefix}/java/latest|
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{_appdir},%{_var}/{log,run}/hadoop}
-for D in $(find . -mindepth 1 -maxdepth 1 -type d | cut -c 3- | %{__grep} -Evw 'build|docs|src'); do
-	%{__cp} -a $D $RPM_BUILD_ROOT%{_appdir}/
-done
+cp -a bin c++ conf ivy lib webapps $RPM_BUILD_ROOT%{_appdir}
 cp -a *.jar *.xml $RPM_BUILD_ROOT%{_appdir}
 
 # we're noarch
@@ -105,8 +103,6 @@ fi
 %{_appdir}/lib/jdiff
 %{_appdir}/lib/*.jar
 %{_appdir}/lib/jsp-2.1
-
-%{_appdir}/contrib
 
 %attr(775,root,hadoop) %{_var}/run/hadoop
 %attr(775,root,hadoop) %{_var}/log/hadoop
