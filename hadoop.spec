@@ -7,10 +7,10 @@ Summary:	Hadoop Distributed File System and MapReduce implementation
 Name:		hadoop
 Version:	0.20.1
 Release:	0.1
-License:	ASL 2.0
+License:	Apache v2.0
 Group:		Daemons
 URL:		http://hadoop.apache.org/common/
-Source0:	http://www.apache.org/dist/hadoop/core/%{name}-%{version}/%{name}-%{version}.tar.gz
+Source0:	http://www.apache.org/dist/hadoop/core/%{name}-%{version}/hadoop-%{version}.tar.gz
 # Source0-md5:	719e169b7760c168441b49f405855b72
 BuildRequires:	rpmbuild(macros) >= 1.202
 Requires(postun):	/usr/sbin/groupdel
@@ -19,11 +19,13 @@ Requires(pre):	/bin/id
 Requires(pre):	/usr/bin/getgid
 Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
-Requires:	jdk
+Requires:	jre
 Provides:	group(hadoop)
 Provides:	user(hadoop)
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%define		_appdir		%{_datadir}/%{name}
 
 %description
 Apache Hadoop Core is a software platform that lets one easily write
@@ -61,32 +63,50 @@ s|.*JAVA_HOME=.*|export JAVA_HOME=%{_prefix}/java/latest|
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_prefix}/local/%{name}
+install -d $RPM_BUILD_ROOT{%{_appdir},%{_var}/{log,run}/hadoop}
 for D in $(find . -mindepth 1 -maxdepth 1 -type d | cut -c 3- | %{__grep} -Evw 'build|docs|src'); do
-	%{__cp} -a $D $RPM_BUILD_ROOT%{_prefix}/local/%{name}/
+	%{__cp} -a $D $RPM_BUILD_ROOT%{_appdir}/
 done
-install *.jar $RPM_BUILD_ROOT%{_prefix}/local/%{name}/
-install *.txt $RPM_BUILD_ROOT%{_prefix}/local/%{name}/
-install *.xml $RPM_BUILD_ROOT%{_prefix}/local/%{name}/
-install -d $RPM_BUILD_ROOT%{_var}/run/hadoop
-install -d $RPM_BUILD_ROOT%{_var}/log/hadoop
+cp -a *.jar *.xml $RPM_BUILD_ROOT%{_appdir}
 
-# Packing list
-(	cd $RPM_BUILD_ROOT
-	echo '%defattr(-,root,root,-)'
-	echo '%attr(0755,hadoop,hadoop) %{_var}/run/hadoop'
-	echo '%attr(0755,hadoop,hadoop) %{_var}/log/hadoop'
-	find $RPM_BUILD_ROOT%{_prefix}/local/%{name} -type d -printf '%%%dir %p\n' | %{__sed} -e 's|$RPM_BUILD_ROOT||g'
-	find $RPM_BUILD_ROOT%{_prefix}/local/%{name} -type f -printf '%p\n' | %{__grep} -v 'conf/' | %{__sed} -e 's|$RPM_BUILD_ROOT||g'
-	find $RPM_BUILD_ROOT%{_prefix}/local/%{name}/conf -type f -printf '%%%config(noreplace) %p\n' | %{__sed} -e 's|$RPM_BUILD_ROOT||g'
-) > filelist
+# we're noarch
+rm -rvf $RPM_BUILD_ROOT%{_appdir}/lib/native/
+rm -rvf $RPM_BUILD_ROOT%{_appdir}/c++/Linux-amd64-64
+rm -rvf $RPM_BUILD_ROOT%{_appdir}/c++/Linux-i386-32
+rm -rvf $RPM_BUILD_ROOT%{_appdir}/librecordio/librecordio.a
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %pre
-%groupadd -r hadoop
-%useradd -m -r -g hadoop -c 'HDFS Runtime User' -s /bin/sh hadoop
+%groupadd -g 245 -r hadoop
+%useradd -u 245 -m -r -g hadoop -c 'HDFS Runtime User' -s /bin/sh hadoop
 
-%files -f filelist
+%postun
+if [ "$1" = "0" ]; then
+	%userremove hadoop
+	%groupremove hadoop
+fi
+
+%files
 %defattr(644,root,root,755)
+%doc CHANGES.txt NOTICE.txt README.txt
+%dir %{_appdir}
+%dir %{_appdir}/bin
+%attr(755,root,root) %{_appdir}/bin/*
+%dir %{_appdir}/conf
+%config(noreplace) %verify(not md5 mtime size) %{_appdir}/conf/*
+%{_appdir}/webapps
+
+%{_appdir}/hadoop-*.jar
+%{_appdir}/ivy
+%{_appdir}/ivy.xml
+%dir %{_appdir}/lib
+%{_appdir}/lib/jdiff
+%{_appdir}/lib/*.jar
+%{_appdir}/lib/jsp-2.1
+
+%{_appdir}/contrib
+
+%attr(775,root,hadoop) %{_var}/run/hadoop
+%attr(775,root,hadoop) %{_var}/log/hadoop
