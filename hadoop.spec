@@ -1,4 +1,5 @@
 # TODO
+# - make use offline maven
 # - hadoop-fuse?
 # - hadoop-native.spec?
 # - pick snippets from http://issues.apache.org/jira/browse/HADOOP-5615
@@ -6,13 +7,13 @@
 # - https://wiki.ubuntu.com/HadoopPackagingSpec
 Summary:	Hadoop Distributed File System and MapReduce implementation
 Name:		hadoop
-Version:	0.20.1
-Release:	0.2
+Version:	0.20.2
+Release:	0.1
 License:	Apache v2.0
 Group:		Daemons
 URL:		http://hadoop.apache.org/common/
 Source0:	http://www.apache.org/dist/hadoop/core/%{name}-%{version}/hadoop-%{version}.tar.gz
-# Source0-md5:	719e169b7760c168441b49f405855b72
+# Source0-md5:	8f40198ed18bef28aeea1401ec536cb9
 BuildRequires:	jdk
 BuildRequires:	jpackage-utils
 BuildRequires:	rpmbuild(macros) >= 1.202
