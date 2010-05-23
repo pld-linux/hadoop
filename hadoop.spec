@@ -1,5 +1,6 @@
 # TODO
 # - hadoop-fuse?
+# - hadoop-native.spec?
 # - pick snippets from http://issues.apache.org/jira/browse/HADOOP-5615
 # - http://issues.apache.org/jira/browse/HADOOP-6255
 # - https://wiki.ubuntu.com/HadoopPackagingSpec
@@ -12,6 +13,8 @@ Group:		Daemons
 URL:		http://hadoop.apache.org/common/
 Source0:	http://www.apache.org/dist/hadoop/core/%{name}-%{version}/hadoop-%{version}.tar.gz
 # Source0-md5:	719e169b7760c168441b49f405855b72
+BuildRequires:	jdk
+BuildRequires:	jpackage-utils
 BuildRequires:	rpmbuild(macros) >= 1.202
 Requires(postun):	/usr/sbin/groupdel
 Requires(postun):	/usr/sbin/userdel
@@ -19,6 +22,7 @@ Requires(pre):	/bin/id
 Requires(pre):	/usr/bin/getgid
 Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
+Requires:	jpackage-utils
 Requires:	jre
 Provides:	group(hadoop)
 Provides:	user(hadoop)
@@ -53,17 +57,26 @@ the data where it is located.
 
 # hadoop-env.sh defaults
 %{__sed} -i -e '
-s|.*JAVA_HOME=.*|export JAVA_HOME=%{_prefix}/java/latest|
+	# set JAVA_HOME from jpackage-utils
+	s|.*JAVA_HOME=.*|. %{_javadir}-utils/java-functions; set_jvm|
 	s|.*HADOOP_CLASSPATH=.*|export HADOOP_CLASSPATH=$HADOOP_CONF_DIR:$(build-classpath hadoop)|
 	s|.*HADOOP_LOG_DIR=.*|export HADOOP_LOG_DIR=%{_var}/log/hadoop|
 	s|.*HADOOP_PID_DIR=.*|export HADOOP_PID_DIR=%{_var}/run/hadoop|
 ' conf/hadoop-env.sh
 
 %build
+%ant package \
+	-Dversion=%{version} \
+%if %{with apidocs}
+	-Djava5.home=%{java_home} \
+	-Dforrest.home=../apache-forrest-0.8
+%else
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{_appdir},%{_var}/{log,run}/hadoop}
+%if 0
 cp -a bin c++ conf ivy lib webapps $RPM_BUILD_ROOT%{_appdir}
 cp -a *.jar *.xml $RPM_BUILD_ROOT%{_appdir}
 
@@ -72,6 +85,7 @@ rm -rvf $RPM_BUILD_ROOT%{_appdir}/lib/native/
 rm -rvf $RPM_BUILD_ROOT%{_appdir}/c++/Linux-amd64-64
 rm -rvf $RPM_BUILD_ROOT%{_appdir}/c++/Linux-i386-32
 rm -rvf $RPM_BUILD_ROOT%{_appdir}/librecordio/librecordio.a
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
