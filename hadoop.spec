@@ -14,6 +14,7 @@ Group:		Daemons
 URL:		http://hadoop.apache.org/common/
 Source0:	http://www.apache.org/dist/hadoop/core/%{name}-%{version}/hadoop-%{version}.tar.gz
 # Source0-md5:	8f40198ed18bef28aeea1401ec536cb9
+BuildRequires:	ant
 BuildRequires:	jdk
 BuildRequires:	jpackage-utils
 BuildRequires:	rpmbuild(macros) >= 1.202
